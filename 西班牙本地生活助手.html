@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>西语生活助手</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; }
+        header { background-color: #4CAF50; color: white; display: flex; align-items: center; padding: 10px; font-weight: bold; }
+        main { padding: 20px; min-height: 400px; }
+        button { margin: 5px; padding: 10px 15px; cursor: pointer; }
+        button:hover { background-color: #45a049; color: white; }
+        input, select { padding: 5px; margin-bottom: 10px; width: 200px; }
+        .phrase-item, .info-item { margin: 5px 0; }
+        footer { background-color: #4CAF50; color: white; display: flex; justify-content: center; padding: 10px; }
+        footer button { margin: 0 5px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">西语生活助手</div>
+</header>
+
+<main id="main-content"></main>
+
+<footer>
+    <button onclick="showModule('home')">首页</button>
+    <button onclick="showModule('phrases')">生活话术</button>
+    <button onclick="showModule('local')">本地助手</button>
+    <button onclick="showModule('tools')">小工具</button>
+</footer>
+
+<script>
+// ------- 1. 生活话术数据 -------
+const phrasesData = {
+    "购物": [
+        {es:"¿Cuánto cuesta esto?", cn:"这个多少钱？"},
+        {es:"¿Me puede dar un recibo, por favor?", cn:"可以给我收据吗？"},
+        {es:"¿Aceptan tarjeta de crédito?", cn:"你们接受信用卡吗？"},
+        {es:"¿Tiene esto en otro color/tamaño?", cn:"这个有其他颜色/尺寸吗？"},
+        {es:"¿Dónde está la sección de descuentos?", cn:"打折区在哪里？"}
+    ],
+    "退税": [
+        {es:"¿Dónde puedo hacer la devolución de impuestos?", cn:"我在哪里可以办理退税？"},
+        {es:"¿Qué documentos necesito presentar?", cn:"我需要出示什么文件？"},
+        {es:"¿Cuánto tiempo tarda el reembolso?", cn:"退税要多久才能到账？"},
+        {es:"¿Este producto es elegible para tax‑free?", cn:"这个商品可以退税吗？"},
+        {es:"¿Puede sellar este formulario, por favor?", cn:"请帮我盖这个表格印章好吗？"}
+    ],
+    "点餐": [
+        {es:"Quisiera una mesa para dos, por favor.", cn:"请给我们一张两人桌。"},
+        {es:"¿Me puede recomendar un plato típico?", cn:"你能推荐一道当地特色菜吗？"},
+        {es:"Sin picante, por favor.", cn:"请不要辣。"},
+        {es:"La cuenta, por favor.", cn:"买单。"},
+        {es:"¿Esto contiene gluten/lácteos?", cn:"这个含有麸质/乳制品吗？"}
+    ],
+    "租房": [
+        {es:"¿Cuánto es el depósito?", cn:"押金是多少？"},
+        {es:"¿Está incluida la electricidad en el alquiler?", cn:"水电费包括在租金里吗？"},
+        {es:"¿Puedo ver el contrato, por favor?", cn:"我可以看一下合同吗？"},
+        {es:"¿Cuándo puedo mudarme?", cn:"我什么时候可以搬进来？"},
+        {es:"¿Hay conexión a internet incluida?", cn:"包括网络连接吗？"}
+    ],
+    "医疗": [
+        {es:"Necesito una cita con un médico.", cn:"我需要预约看医生。"},
+        {es:"Tengo dolor aquí.", cn:"我这里疼。"},
+        {es:"¿Dónde está la farmacia más cercana?", cn:"最近的药店在哪里？"},
+        {es:"¿Puede recomendarme un hospital?", cn:"你能推荐一家医院吗？"},
+        {es:"Soy alérgico/a a…", cn:"我对…过敏。"}
+    ],
+    "办理证件": [
+        {es:"¿Dónde está la oficina de extranjería?", cn:"移民局在哪里？"},
+        {es:"¿Qué documentos necesito para renovar mi tarjeta?", cn:"我续签需要什么材料？"},
+        {es:"¿Cuánto tarda el trámite?", cn:"这个手续要多久？"},
+        {es:"Necesito sacar el NIE.", cn:"我需要办理 NIE。"},
+        {es:"¿Puedo reservar cita online?", cn:"我可以在线预约吗？"}
+    ]
+};
+
+// ------- 2. 本地生活信息（节假日 + 交通 + 商店） -------
+const localData = {
+    "马德里": {
+        "交通": ["地铁: 线路1–12", "公交: Line 5, Line 27", "火车: Chamartín → Atocha"],
+        "商店": ["Mercadona: 9:00–21:00", "Carrefour: 10:00–22:00"],
+        "节假日": [
+            "1月1日 — Año Nuevo (新年)",
+            "1月6日 — Epifanía del Señor (三王节)",
+            "5月2日 — Día de la Comunidad de Madrid (马德里自治区日)",
+            "7月25日 — Santiago Apóstol (圣地亚哥使徒节)",
+            "12月6日 — Día de la Constitución (宪法日)",
+            "12月25日 — Navidad (圣诞节)"
+        ]
+    },
+    "巴塞罗那": {
+        "交通": ["地铁: L1–L11", "公交: H12, V15", "火车: Sants → Passeig de Gràcia"],
+        "商店": ["Mercadona: 9:00–21:00", "El Corte Inglés: 10:00–22:00"],
+        "节假日": [
+            "1月1日 — Año Nuevo (新年)",
+            "1月6日 — Epifanía del Señor (三王节)",
+            "9月11日 — La Diada (加泰罗尼亚日)",
+            "12月6日 — Día de la Constitución (宪法日)",
+            "12月25日 — Navidad (圣诞节)",
+            "12月26日 — San Esteban (圣史蒂芬节)"
+        ]
+    },
+    "瓦伦西亚": {
+        "交通": ["地铁: 1–9号线", "公交: 1, 2, 31", "火车: Estació del Nord"],
+        "商店": ["Mercadona: 9:00–21:00", "Carrefour: 10:00–22:00"],
+        "节假日": [
+            "1月1日 — Año Nuevo (新年)",
+            "1月6日 — Epifanía del Señor (三王节)",
+            "3月19日 — Día de San José (圣何塞节)",
+            "10月9日 — Día de la Comunitat Valenciana (瓦伦西亚自治区日)",
+            "12月6日 — Día de la Constitución (宪法日)",
+            "12月25日 — Navidad (圣诞节)"
+        ]
+    }
+};
+
+// ------- 页面模块切换 -------
+function showHome() {
+    document.getElementById('main-content').innerHTML = `
+        <h2>欢迎使用西语生活助手</h2>
+        <button onclick="showModule('phrases')">生活话术</button>
+        <button onclick="showModule('local')">本地生活助手</button>
+        <button onclick="showModule('tools')">西语小工具</button>
+    `;
+}
+
+function showModule(module) {
+    const main = document.getElementById('main-content');
+    main.innerHTML = '';
+
+    if(module === 'home') showHome();
+    else if(module === 'phrases') showPhrases();
+    else if(module === 'local') showLocal();
+    else if(module === 'tools') showTools();
+}
+
+// ------- 生活话术 -------
+function showPhrases() {
+    document.getElementById('main-content').innerHTML = `
+        <h2>生活话术模块</h2>
+        <input type="text" id="searchInput" placeholder="输入关键词搜索话术" oninput="searchPhrase()">
+        <div>
+            <button onclick="showCategory('购物')">购物</button>
+            <button onclick="showCategory('退税')">退税</button>
+            <button onclick="showCategory('点餐')">点餐</button>
+            <button onclick="showCategory('租房')">租房</button>
+            <button onclick="showCategory('医疗')">医疗</button>
+            <button onclick="showCategory('办理证件')">办理证件</button>
+        </div>
+        <div id="phrase-list"></div>
+    `;
+}
+
+function showCategory(category) {
+    const list = document.getElementById('phrase-list');
+    list.innerHTML = `<h3>${category} 常用表达：</h3>`;
+    phrasesData[category].forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'phrase-item';
+        div.innerHTML = `<strong>${item.es}</strong> — ${item.cn}`;
+        list.appendChild(div);
+    });
+}
+
+function searchPhrase() {
+    const kw = document.getElementById('searchInput').value.toLowerCase();
+    const list = document.getElementById('phrase-list');
+    list.innerHTML = `<h3>搜索结果：</h3>`;
+    Object.keys(phrasesData).forEach(cat => {
+        phrasesData[cat].forEach(item => {
+            if(item.es.toLowerCase().includes(kw) || item.cn.includes(kw)) {
+                const div = document.createElement('div');
+                div.innerHTML = `<strong>${item.es}</strong> — ${item.cn}`;
+                list.appendChild(div);
+            }
+        });
+    });
+}
+
+// ------- 本地助手 -------
+function showLocal() {
+    document.getElementById('main-content').innerHTML = `
+        <h2>本地生活助手</h2>
+        <label>选择城市：</label>
+        <select id="citySelect" onchange="updateLocalButtons()">
+            <option value="">--请选择城市--</option>
+            <option value="马德里">马德里</option>
+            <option value="巴塞罗那">巴塞罗那</option>
+            <option value="瓦伦西亚">瓦伦西亚</option>
+        </select>
+        <div id="local-buttons" style="display:none;">
+            <button onclick="showLocalInfo('交通')">当地交通</button>
+            <button onclick="showLocalInfo('商店')">商店</button>
+            <button onclick="showLocalInfo('节假日')">节假日时间</button>
+        </div>
+        <div id="local-info"></div>
+    `;
+}
+
+function updateLocalButtons() {
+    const city = document.getElementById('citySelect').value;
+    document.getElementById('local-buttons').style.display = city ? 'block' : 'none';
+    document.getElementById('local-info').innerHTML = '';
+}
+
+function showLocalInfo(type) {
+    const city = document.getElementById('citySelect').value;
+    const infoDiv = document.getElementById('local-info');
+    if(!city) return;
+    infoDiv.innerHTML = `<h3>${city} - ${type} 信息：</h3>`;
+    localData[city][type].forEach(item => {
+        const div = document.createElement('div');
+        div.innerText = item;
+        infoDiv.appendChild(div);
+    });
+}
+
+// ------- 小工具：金额转换 —— 正确西语写法 -------
+const UNITS = ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve"];
+const TEENS = ["diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve"];
+const TENS  = ["","","veinte","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"];
+const HUND  = ["","cien","doscientos","trescientos","cuatrocientos","quinientos","seiscientos","setecientos","ochocientos","novecientos"];
+
+function numToSpanish(n) {
+    n = parseInt(n);
+    if(n < 10) return UNITS[n];
+    if(n < 20) return TEENS[n-10];
+    if(n < 100) {
+        let t = Math.floor(n/10), u = n%10;
+        return TENS[t] + (u ? " y " + UNITS[u] : "");
+    }
+    if(n < 1000) {
+        let h = Math.floor(n/100), rest = n%100;
+        if(rest === 0) return (h==1 ? "cien" : HUND[h]);
+        return (h==1 ? "ciento " : HUND[h] + " ") + numToSpanish(rest);
+    }
+    if(n < 10000) {
+        let thousands = Math.floor(n/1000), rest = n%1000;
+        return UNITS[thousands] + " mil" + (rest ? " " + numToSpanish(rest) : "");
+    }
+    return n.toString();
+}
+
+function showTools() {
+    document.getElementById('main-content').innerHTML = `
+        <h2>西语小工具</h2>
+        <div><label>金额转换:</label>
+            <input id="amountInput" type="number"><button onclick="convertAmount()">转换</button>
+            <p id="amountResult"></p></div>
+        <div><label>欧元汇率:</label>
+            <input id="euroInput" type="number"><button onclick="convertEuro()">转换</button>
+            <p id="euroResult"></p></div>
+        <div><label>缩写翻译:</label>
+            <input id="abbrInput" type="text"><button onclick="translateAbbr()">翻译</button>
+            <p id="abbrResult"></p></div>
+    `;
+}
+
+function convertAmount() {
+    const v = document.getElementById('amountInput').value;
+    if(!v) { document.getElementById('amountResult').innerText = "请输入金额"; return; }
+    document.getElementById('amountResult').innerText = `${v} → ${numToSpanish(v)}`;
+}
+
+function convertEuro() {
+    const v = document.getElementById('euroInput').value;
+    if(!v) { document.getElementById('euroResult').innerText = "请输入金额"; return; }
+    const rate = 7.5;
+    document.getElementById('euroResult').innerText = `${v} EUR = ${v*rate} CNY`;
+}
+
+function translateAbbr() {
+    const abbr = document.getElementById('abbrInput').value.toUpperCase();
+    if(!abbr) { document.getElementById('abbrResult').innerText = "请输入缩写"; return; }
+    const dict = {"UE":"Unión Europea","DNI":"Documento Nacional de Identidad","NIE":"Número de Identificación de Extranjero"};
+    document.getElementById('abbrResult').innerText = dict[abbr] || "未收录";
+}
+
+// 初始化
+showHome();
+</script>
+
+</body>
+</html>
